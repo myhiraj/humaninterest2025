@@ -1,0 +1,133 @@
+{% extends 'hsa/base.html' %}
+
+{% block title %}HSA Management System{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="card" style="background: linear-gradient(135deg, #3498db, #2c3e50); color: white; text-align: center; padding: 4rem 2rem; margin-bottom: 2rem; border-radius: 12px;">
+    <div style="max-width: 800px; margin: 0 auto;">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem; color: white;">Health Savings Account</h1>
+        <h2 style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.9); font-weight: 400;">Manage Your Medical Expenses with Tax Advantages</h2>
+        <p style="font-size: 1.1rem; margin-bottom: 3rem; color: rgba(255,255,255,0.8); line-height: 1.8;">
+            Take control of your healthcare finances with our comprehensive HSA management platform. 
+            Save on taxes, track expenses, and make qualified medical purchases with ease.
+        </p>
+        
+        {% if not user.is_authenticated %}
+        <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'hsa:signup' %}" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1.1rem; font-weight: 600;">
+                Create Your HSA Account
+            </a>
+            <a href="{% url 'login' %}" class="btn" style="background: rgba(255,255,255,0.2); border: 2px solid white; padding: 1rem 2rem; font-size: 1.1rem; font-weight: 600;">
+                Sign In to Your Account
+            </a>
+        </div>
+        {% else %}
+        <div style="margin-bottom: 2rem;">
+            <p style="font-size: 1.2rem; margin-bottom: 1rem;">Welcome back, {{ user.first_name|default:user.username }}!</p>
+        </div>
+        <a href="{% url 'hsa:dashboard' %}" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1.1rem; font-weight: 600;">
+            Go to Your Dashboard
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Features Section -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+    <div class="card" style="text-align: center; padding: 2.5rem 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>
+        <h3 style="color: #2c3e50; margin-bottom: 1rem;">Tax Savings</h3>
+        <p style="color: #666; line-height: 1.6;">
+            Contribute pre-tax dollars and reduce your taxable income. Withdraw funds tax-free for qualified medical expenses.
+        </p>
+    </div>
+    
+    <div class="card" style="text-align: center; padding: 2.5rem 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">💳</div>
+        <h3 style="color: #2c3e50; margin-bottom: 1rem;">HSA Debit Card</h3>
+        <p style="color: #666; line-height: 1.6;">
+            Get instant access to your HSA funds with a virtual debit card. Automatic IRS compliance checking included.
+        </p>
+    </div>
+    
+    <div class="card" style="text-align: center; padding: 2.5rem 2rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+        <h3 style="color: #2c3e50; margin-bottom: 1rem;">Expense Tracking</h3>
+        <p style="color: #666; line-height: 1.6;">
+            Track all your medical expenses in one place. Categorize transactions and maintain records for tax purposes.
+        </p>
+    </div>
+</div>
+
+<!-- How It Works Section -->
+<div class="card" style="margin-bottom: 3rem;">
+    <h2 style="text-align: center; margin-bottom: 2rem; color: #2c3e50;">How It Works</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+        <div style="text-align: center; padding: 1.5rem;">
+            <div style="background: #3498db; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin: 0 auto 1rem;">1</div>
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">Create Account</h4>
+            <p style="color: #666; font-size: 0.9rem;">Sign up and get your HSA account number instantly</p>
+        </div>
+        
+        <div style="text-align: center; padding: 1.5rem;">
+            <div style="background: #27ae60; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin: 0 auto 1rem;">2</div>
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">Deposit Funds</h4>
+            <p style="color: #666; font-size: 0.9rem;">Add money to your HSA with tax-advantaged contributions</p>
+        </div>
+        
+        <div style="text-align: center; padding: 1.5rem;">
+            <div style="background: #e74c3c; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin: 0 auto 1rem;">3</div>
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">Get Your Card</h4>
+            <p style="color: #666; font-size: 0.9rem;">Request a virtual HSA debit card for easy spending</p>
+        </div>
+        
+        <div style="text-align: center; padding: 1.5rem;">
+            <div style="background: #f39c12; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin: 0 auto 1rem;">4</div>
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">Make Purchases</h4>
+            <p style="color: #666; font-size: 0.9rem;">Use your card for qualified medical expenses</p>
+        </div>
+    </div>
+</div>
+
+<!-- Benefits Section -->
+<div class="card" style="background: #f8f9fa; border: 1px solid #e9ecef; margin-bottom: 3rem;">
+    <h2 style="text-align: center; margin-bottom: 2rem; color: #2c3e50;">Why Choose Our HSA Platform?</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+        <div>
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">✅ IRS Compliance</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Automatic validation ensures all transactions comply with IRS regulations</p>
+        </div>
+        <div>
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">🔒 Secure Platform</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Bank-level security protects your financial and medical information</p>
+        </div>
+        <div>
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">📱 Easy to Use</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Intuitive interface makes managing your HSA simple and straightforward</p>
+        </div>
+        <div>
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">⚡ Real-time Updates</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 1rem;">Instant balance updates and transaction notifications keep you informed</p>
+        </div>
+    </div>
+</div>
+
+{% if not user.is_authenticated %}
+<!-- Call to Action Section -->
+<div class="card" style="background: linear-gradient(135deg, #27ae60, #229954); color: white; text-align: center; padding: 3rem 2rem; border-radius: 12px;">
+    <h2 style="font-size: 2rem; margin-bottom: 1rem; color: white;">Ready to Start Saving?</h2>
+    <p style="font-size: 1.1rem; margin-bottom: 2rem; color: rgba(255,255,255,0.9);">
+        Join thousands of people who are maximizing their healthcare savings with tax-advantaged HSA accounts.
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{% url 'hsa:signup' %}" class="btn" style="background: white; color: #27ae60; padding: 1rem 2rem; font-size: 1.1rem; font-weight: 600;">
+            Get Started Today
+        </a>
+        <a href="{% url 'login' %}" class="btn" style="background: rgba(255,255,255,0.2); border: 2px solid white; padding: 1rem 2rem; font-size: 1.1rem; font-weight: 600;">
+            I Have an Account
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

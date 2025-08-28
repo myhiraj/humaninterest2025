@@ -1,0 +1,160 @@
+{% extends 'hsa/base.html' %}
+
+{% block title %}Deposit Funds - HSA Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Deposit Funds to Your HSA</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <p style="color: #666; margin: 0;">
+            Account: {{ hsa_account.account_number }} | Current Balance: <strong>${{ hsa_account.balance }}</strong>
+        </p>
+        <a href="{% url 'hsa:dashboard' %}" class="btn">Back to Dashboard</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <!-- Deposit Form -->
+    <div class="card">
+        <h3>Make a Deposit</h3>
+        <p style="color: #666; margin-bottom: 1.5rem;">
+            Add funds to your HSA account. Contributions may be tax-deductible up to IRS limits.
+        </p>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="amount">Deposit Amount ($):</label>
+                <input type="number" 
+                       id="amount" 
+                       name="amount" 
+                       step="0.01" 
+                       min="0.01" 
+                       placeholder="0.00" 
+                       required
+                       style="font-size: 1.1rem; padding: 1rem;">
+            </div>
+            
+            <div style="background: #e8f4fd; border-left: 4px solid #3498db; padding: 1rem; margin: 1rem 0; border-radius: 0 4px 4px 0;">
+                <div style="font-size: 0.9rem; color: #2c3e50;">
+                    <strong>💡 Quick amounts:</strong>
+                    <div style="margin-top: 0.5rem;">
+                        <button type="button" onclick="document.getElementById('amount').value = '100'" 
+                                style="background: #3498db; color: white; border: none; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">$100</button>
+                        <button type="button" onclick="document.getElementById('amount').value = '500'" 
+                                style="background: #3498db; color: white; border: none; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">$500</button>
+                        <button type="button" onclick="document.getElementById('amount').value = '1000'" 
+                                style="background: #3498db; color: white; border: none; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">$1,000</button>
+                        <button type="button" onclick="document.getElementById('amount').value = '3650'" 
+                                style="background: #3498db; color: white; border: none; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">$3,650 (Max)</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-success" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                💰 Deposit Funds
+            </button>
+        </form>
+    </div>
+    
+    <!-- Information Panel -->
+    <div class="card">
+        <h3>HSA Contribution Information</h3>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">2024 Contribution Limits</h4>
+            <ul style="color: #666; padding-left: 1.5rem; line-height: 1.8;">
+                <li><strong>Individual:</strong> $3,650 per year</li>
+                <li><strong>Family:</strong> $7,300 per year</li>
+                <li><strong>Catch-up (55+):</strong> Additional $1,000</li>
+            </ul>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">Tax Benefits</h4>
+            <ul style="color: #666; padding-left: 1.5rem; line-height: 1.8;">
+                <li>Tax-deductible contributions</li>
+                <li>Tax-free growth and earnings</li>
+                <li>Tax-free withdrawals for qualified expenses</li>
+                <li>No "use it or lose it" rule</li>
+            </ul>
+        </div>
+        
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; border-radius: 0 4px 4px 0; margin-bottom: 1rem;">
+            <div style="font-size: 0.9rem; color: #856404;">
+                <strong>⚠️ Important:</strong> This is a demo system. In production, deposits would be processed through ACH transfers, wire transfers, or employer payroll deductions.
+            </div>
+        </div>
+        
+        <div style="background: #d4edda; border-left: 4px solid #27ae60; padding: 1rem; border-radius: 0 4px 4px 0;">
+            <div style="font-size: 0.9rem; color: #155724;">
+                <strong>💡 Pro Tip:</strong> Consider making regular monthly deposits to maximize your tax savings throughout the year.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Deposits -->
+<div class="card">
+    <h3>Recent Deposits</h3>
+    {% with recent_deposits=hsa_account.transactions.all|dictsort:"transaction_date"|slice:":5" %}
+    {% if recent_deposits %}
+    <div style="margin-top: 1rem;">
+        {% for transaction in recent_deposits %}
+        {% if transaction.transaction_type == 'deposit' %}
+        <div class="transaction-item">
+            <div>
+                <div style="font-weight: 500;">
+                    💰 Account Deposit
+                </div>
+                <div style="font-size: 0.9rem; color: #666;">
+                    {{ transaction.transaction_date|date:"M d, Y g:i A" }}
+                    {% if transaction.description %}
+                    | {{ transaction.description }}
+                    {% endif %}
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: 500; font-size: 1.1rem; color: #27ae60;">
+                    +${{ transaction.amount }}
+                </div>
+                <div class="status-{{ transaction.status }}">
+                    {{ transaction.get_status_display }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; color: #666; padding: 2rem;">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">📈</div>
+        <p>No deposits yet. Make your first contribution to start saving!</p>
+    </div>
+    {% endif %}
+    {% endwith %}
+</div>
+
+<!-- Action Buttons -->
+<div class="card">
+    <h3>Next Steps</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        {% if not active_cards %}
+        <a href="{% url 'hsa:issue_card' %}" class="btn">
+            💳 Request HSA Debit Card
+        </a>
+        {% else %}
+        <a href="{% url 'hsa:process_transaction' %}" class="btn">
+            🏪 Make a Purchase
+        </a>
+        {% endif %}
+        <a href="{% url 'hsa:transaction_history' %}" class="btn">
+            📊 View Transaction History
+        </a>
+        <a href="{% url 'hsa:dashboard' %}" class="btn">
+            🏠 Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

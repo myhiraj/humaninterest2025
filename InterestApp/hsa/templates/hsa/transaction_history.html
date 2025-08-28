@@ -1,0 +1,144 @@
+{% extends 'hsa/base.html' %}
+
+{% block title %}Transaction History - HSA Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Transaction History</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <p style="color: #666; margin: 0;">
+            Account: {{ hsa_account.account_number }} | Current Balance: <strong>${{ hsa_account.balance }}</strong>
+        </p>
+        <a href="{% url 'hsa:dashboard' %}" class="btn">Back to Dashboard</a>
+    </div>
+</div>
+
+{% if transactions %}
+<div class="card">
+    <h3>All Transactions</h3>
+    <div style="margin-bottom: 1rem;">
+        <small style="color: #666;">Showing {{ transactions|length }} transaction{{ transactions|length|pluralize }}</small>
+    </div>
+    
+    {% for transaction in transactions %}
+    <div class="transaction-item">
+        <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                <div>
+                    <div style="font-weight: 500; font-size: 1.1rem;">
+                        {% if transaction.transaction_type == 'deposit' %}
+                            <span style="color: #27ae60;">💰 Account Deposit</span>
+                        {% elif transaction.transaction_type == 'refund' %}
+                            <span style="color: #3498db;">↩️ Refund</span>
+                        {% else %}
+                            <span style="color: #2c3e50;">🏪 {{ transaction.merchant|default:"Purchase" }}</span>
+                        {% endif %}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #666; margin-top: 0.25rem;">
+                        {{ transaction.transaction_date|date:"M d, Y g:i A" }}
+                        {% if transaction.card %}
+                        | Card ending in {{ transaction.card.card_number|slice:"-4" }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 600; font-size: 1.2rem;">
+                        {% if transaction.transaction_type == 'deposit' or transaction.transaction_type == 'refund' %}
+                            <span style="color: #27ae60;">+${{ transaction.amount }}</span>
+                        {% else %}
+                            <span style="color: #e74c3c;">-${{ transaction.amount }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="status-{{ transaction.status }}" style="font-size: 0.9rem;">
+                        {{ transaction.get_status_display }}
+                    </div>
+                </div>
+            </div>
+            
+            {% if transaction.description %}
+            <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">
+                <strong>Description:</strong> {{ transaction.description }}
+            </div>
+            {% endif %}
+            
+            {% if transaction.expense_category %}
+            <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">
+                <strong>Category:</strong> {{ transaction.expense_category.name }}
+                {% if not transaction.expense_category.is_qualified %}
+                <span style="color: #e74c3c; font-weight: 500;">(Not IRS-Qualified)</span>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            {% if transaction.decline_reason %}
+            <div style="background: #f8d7da; color: #721c24; padding: 0.5rem; border-radius: 4px; font-size: 0.9rem; border-left: 3px solid #e74c3c;">
+                <strong>Decline Reason:</strong> {{ transaction.decline_reason }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <h3>Transaction Summary</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 1.5rem; font-weight: bold; color: #27ae60;">
+                ${% widthratio transactions|length 1 transactions|length %}{{ transactions|length|floatformat:0 }}
+            </div>
+            <div style="color: #666; font-size: 0.9rem;">Total Transactions</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 1.5rem; font-weight: bold; color: #3498db;">
+                {% with approved_count=transactions|dictsort:"status"|dictsort:"approved"|length %}
+                {{ approved_count }}
+                {% endwith %}
+            </div>
+            <div style="color: #666; font-size: 0.9rem;">Approved</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 1.5rem; font-weight: bold; color: #e74c3c;">
+                {% with declined_count=transactions|dictsort:"status"|dictsort:"declined"|length %}
+                {{ declined_count }}
+                {% endwith %}
+            </div>
+            <div style="color: #666; font-size: 0.9rem;">Declined</div>
+        </div>
+        <div style="text-align: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+            <div style="font-size: 1.5rem; font-weight: bold; color: #f39c12;">
+                {% with pending_count=transactions|dictsort:"status"|dictsort:"pending"|length %}
+                {{ pending_count }}
+                {% endwith %}
+            </div>
+            <div style="color: #666; font-size: 0.9rem;">Pending</div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="card">
+    <div style="text-align: center; padding: 3rem 1rem; color: #666;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+        <h3 style="color: #2c3e50; margin-bottom: 1rem;">No Transactions Yet</h3>
+        <p style="margin-bottom: 2rem;">
+            You haven't made any transactions yet. Start by depositing funds or making your first purchase.
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <a href="{% url 'hsa:deposit_funds' %}" class="btn btn-success">
+                Deposit Funds
+            </a>
+            {% if not active_cards %}
+            <a href="{% url 'hsa:process_transaction' %}" class="btn">
+                Make Purchase
+            </a>
+            {% else %}
+            <a href="{% url 'hsa:issue_card' %}" class="btn">
+                Request HSA Card
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

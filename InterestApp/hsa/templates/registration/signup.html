@@ -1,0 +1,60 @@
+{% extends 'hsa/base.html' %}
+
+{% block title %}Sign Up - HSA Management{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 2rem auto;">
+    <h2>Create Your HSA Account</h2>
+    <p style="color: #666; margin-bottom: 1.5rem;">
+        Sign up to create your Health Savings Account and start managing your medical expenses.
+    </p>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="{{ form.username.id_for_label }}">Username:</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+                <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                    {{ form.username.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.password1.id_for_label }}">Password:</label>
+            {{ form.password1 }}
+            {% if form.password1.errors %}
+                <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                    {{ form.password1.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.password2.id_for_label }}">Confirm Password:</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}
+                <div style="color: #e74c3c; font-size: 0.9rem; margin-top: 0.25rem;">
+                    {{ form.password2.errors.0 }}
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if form.non_field_errors %}
+        <div style="color: #e74c3c; margin-bottom: 1rem;">
+            {{ form.non_field_errors.0 }}
+        </div>
+        {% endif %}
+        
+        <button type="submit" class="btn btn-success" style="width: 100%; margin-bottom: 1rem;">
+            Create Account & HSA
+        </button>
+    </form>
+    
+    <div style="text-align: center; border-top: 1px solid #eee; padding-top: 1rem;">
+        <p>Already have an account? <a href="{% url 'login' %}">Sign In</a></p>
+    </div>
+</div>
+{% endblock %}

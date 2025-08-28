@@ -1,0 +1,155 @@
+{% extends 'hsa/base.html' %}
+
+{% block title %}HSA Card Management{% endblock %}
+
+{% block content %}
+<style>
+.card-status {
+    font-weight: 500; 
+    padding: 0.25rem 0.75rem; 
+    border-radius: 12px; 
+    font-size: 0.8rem; 
+    text-transform: uppercase;
+}
+.status-active {
+    background-color: #d4edda; 
+    color: #155724;
+}
+.status-pending {
+    background-color: #fff3cd; 
+    color: #856404;
+}
+.status-blocked {
+    background-color: #f8d7da; 
+    color: #721c24;
+}
+.status-expired {
+    background-color: #e2e3e5; 
+    color: #6c757d;
+}
+</style>
+<div class="card">
+    <h2>HSA Card Management</h2>
+    <p style="color: #666;">Account: {{ hsa_account.account_number }} | Balance: ${{ hsa_account.balance }}</p>
+</div>
+
+{% if existing_cards %}
+<div class="card">
+    <h3>Your HSA Cards</h3>
+    {% for card in existing_cards %}
+    <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+            <div>
+                <div style="font-size: 1.2rem; font-weight: 500; font-family: monospace;">
+                    {{ card.masked_card_number }}
+                </div>
+                <div style="color: #666; font-size: 0.9rem; margin-top: 0.25rem;">
+                    HSA Debit Card
+                </div>
+            </div>
+            <div style="text-align: right;">
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; font-size: 0.9rem; color: #666;">
+            <div>
+                <div style="font-weight: 500;">Issued Date</div>
+                <div>{{ card.issued_at|date:"M d, Y" }}</div>
+            </div>
+            <div>
+                <div style="font-weight: 500;">Expires</div>
+                <div>{{ card.expiry_date|date:"m/y" }}</div>
+            </div>
+            {% if card.status == 'active' %}
+            <div>
+                <div style="font-weight: 500;">CVV</div>
+                <div style="font-family: monospace;">{{ card.cvv }}</div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if card.status == 'active' %}
+        <div style="background: #e8f4fd; border-left: 4px solid #3498db; padding: 1rem; margin-top: 1rem; border-radius: 0 4px 4px 0;">
+            <div style="font-weight: 500; color: #2c3e50; margin-bottom: 0.5rem;">Card Details (Demo Only)</div>
+            <div style="font-family: monospace; font-size: 0.9rem; color: #666;">
+                <div>Full Number: {{ card.card_number }}</div>
+                <div>Expiry: {{ card.expiry_date|date:"m/y" }} | CVV: {{ card.cvv }}</div>
+            </div>
+            <small style="color: #666; font-style: italic;">
+                *In production, card details would never be displayed in full
+            </small>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+    {% if existing_cards|length == 0 %}
+    <h3>Request Your HSA Debit Card</h3>
+    <p style="color: #666; margin-bottom: 1.5rem;">
+        Get instant access to your HSA funds with a virtual debit card. Use it for qualified medical expenses at participating merchants.
+    </p>
+    
+    <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+        <h4 style="color: #2c3e50; margin-bottom: 1rem;">Card Features:</h4>
+        <ul style="color: #666; padding-left: 1.5rem;">
+            <li>Instant virtual card issuance</li>
+            <li>Real-time transaction validation</li>
+            <li>Automatic IRS compliance checking</li>
+            <li>Works at medical providers and pharmacies</li>
+            <li>Linked directly to your HSA balance</li>
+        </ul>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+            Issue HSA Debit Card
+        </button>
+    </form>
+    
+    {% else %}
+    
+    {% if existing_cards|length > 0 and not existing_cards.0.status == 'active' %}
+    <h3>Request Additional Card</h3>
+    <p style="color: #666; margin-bottom: 1rem;">
+        You can request a replacement card if needed.
+    </p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn">Request New Card</button>
+    </form>
+    {% else %}
+    <h3>Card Management</h3>
+    <p style="color: #666; margin-bottom: 1rem;">
+        Your HSA card is active and ready to use. You can now make purchases at qualified medical providers.
+    </p>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{% url 'hsa:process_transaction' %}" class="btn btn-success">
+            Make a Purchase
+        </a>
+        <a href="{% url 'hsa:transaction_history' %}" class="btn">
+            View Transactions
+        </a>
+    </div>
+    {% endif %}
+    
+    {% endif %}
+</div>
+
+{% if existing_cards %}
+<div class="card">
+    <h3>Important Reminders</h3>
+    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; border-radius: 0 4px 4px 0;">
+        <ul style="margin: 0; padding-left: 1.5rem; color: #856404;">
+            <li>Only use your HSA card for IRS-qualified medical expenses</li>
+            <li>Keep receipts for all transactions for tax purposes</li>
+            <li>Non-qualified purchases will be declined automatically</li>
+            <li>Your card is linked to your current HSA balance: ${{ hsa_account.balance }}</li>
+        </ul>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

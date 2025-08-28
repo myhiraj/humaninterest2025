@@ -1,0 +1,94 @@
+{% extends 'hsa/base.html' %}
+
+{% block title %}HSA Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Welcome, {{ user.first_name|default:user.username }}!</h2>
+    <p>Account Number: <strong>{{ hsa_account.account_number }}</strong></p>
+    <div class="balance-display">
+        Current Balance: ${{ hsa_account.balance }}
+    </div>
+</div>
+
+<div class="card">
+    <h2>Quick Actions</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <a href="{% url 'hsa:deposit_funds' %}" class="btn btn-success">Deposit Funds</a>
+        {% if not active_cards %}
+        <a href="{% url 'hsa:issue_card' %}" class="btn">Request HSA Card</a>
+        {% else %}
+        <a href="{% url 'hsa:process_transaction' %}" class="btn">Make Purchase</a>
+        {% endif %}
+        <a href="{% url 'hsa:transaction_history' %}" class="btn">View All Transactions</a>
+        <a href="{% url 'hsa:issue_card' %}" class="btn">Manage Cards</a>
+    </div>
+</div>
+
+{% if active_cards %}
+<div class="card">
+    <h2>Your HSA Cards</h2>
+    {% for card in active_cards %}
+    <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin-bottom: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <strong>{{ card.masked_card_number }}</strong>
+                <div style="font-size: 0.9rem; color: #666;">
+                    Expires: {{ card.expiry_date|date:"m/y" }} | Status: {{ card.get_status_display }}
+                </div>
+            </div>
+            <div style="color: #27ae60; font-weight: 500;">
+                {{ card.get_status_display|upper }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>Recent Transactions</h2>
+    {% if recent_transactions %}
+    {% for transaction in recent_transactions %}
+    <div class="transaction-item">
+        <div>
+            <div style="font-weight: 500;">
+                {% if transaction.transaction_type == 'deposit' %}
+                    Deposit - {{ transaction.description|default:"Account Funding" }}
+                {% else %}
+                    {{ transaction.merchant|default:"Purchase" }}
+                {% endif %}
+            </div>
+            <div style="font-size: 0.9rem; color: #666;">
+                {{ transaction.transaction_date|date:"M d, Y H:i" }}
+                {% if transaction.expense_category %}
+                | {{ transaction.expense_category.name }}
+                {% endif %}
+            </div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-weight: 500; font-size: 1.1rem;">
+                {% if transaction.transaction_type == 'deposit' %}
+                    +${{ transaction.amount }}
+                {% else %}
+                    -${{ transaction.amount }}
+                {% endif %}
+            </div>
+            <div class="status-{{ transaction.status }}">
+                {{ transaction.get_status_display }}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% if recent_transactions|length >= 5 %}
+    <div style="text-align: center; margin-top: 1rem;">
+        <a href="{% url 'hsa:transaction_history' %}" class="btn">View All Transactions</a>
+    </div>
+    {% endif %}
+    {% else %}
+    <div style="text-align: center; color: #666; padding: 2rem;">
+        <p>No transactions yet. Start by depositing funds or making a purchase!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

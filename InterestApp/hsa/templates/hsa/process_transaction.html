@@ -1,0 +1,269 @@
+{% extends 'hsa/base.html' %}
+
+{% block title %}Make Purchase - HSA Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Process HSA Transaction</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <p style="color: #666; margin: 0;">
+            Account: {{ hsa_account.account_number }} | Available Balance: <strong>${{ hsa_account.balance }}</strong>
+        </p>
+        <a href="{% url 'hsa:dashboard' %}" class="btn">Back to Dashboard</a>
+    </div>
+</div>
+
+{% if active_card %}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+    <!-- Transaction Form -->
+    <div class="card">
+        <h3>Make a Purchase</h3>
+        <p style="color: #666; margin-bottom: 1.5rem;">
+            Simulate a medical expense purchase using your HSA debit card.
+        </p>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="merchant">Merchant/Provider:</label>
+                <input type="text" 
+                       id="merchant" 
+                       name="merchant" 
+                       placeholder="e.g., ABC Medical Center, CVS Pharmacy" 
+                       required
+                       style="font-size: 1rem;">
+                <small style="color: #666; font-size: 0.85rem;">Enter the name of the medical provider or pharmacy</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="amount">Transaction Amount ($):</label>
+                <input type="number" 
+                       id="amount" 
+                       name="amount" 
+                       step="0.01" 
+                       min="0.01" 
+                       max="{{ hsa_account.balance }}"
+                       placeholder="0.00" 
+                       required
+                       style="font-size: 1.1rem; padding: 1rem;">
+                <small style="color: #666; font-size: 0.85rem;">Maximum available: ${{ hsa_account.balance }}</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="expense_category">Medical Expense Category:</label>
+                <select id="expense_category" name="expense_category" required style="font-size: 1rem;">
+                    <option value="">Select a category...</option>
+                    {% for category in expense_categories %}
+                    <option value="{{ category.id }}" {% if not category.is_qualified %}style="color: #e74c3c;"{% endif %}>
+                        {{ category.name }}
+                        {% if not category.is_qualified %} (Not IRS-Qualified){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small style="color: #666; font-size: 0.85rem;">Choose the type of medical expense. Red items are not IRS-qualified and will be declined.</small>
+            </div>
+            
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin: 1rem 0; border-radius: 0 4px 4px 0;">
+                <div style="font-size: 0.9rem; color: #856404;">
+                    <strong>⚠️ IRS Compliance Check:</strong> Transactions are automatically validated against IRS-qualified medical expense rules. Non-qualified purchases will be declined.
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-success" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                💳 Process Transaction
+            </button>
+        </form>
+        
+        <div style="margin-top: 1rem;">
+            <div style="font-size: 0.9rem; color: #666;">
+                <strong>💡 Common amounts:</strong>
+                <div style="margin-top: 0.5rem;">
+                    <button type="button" onclick="setAmount('25.00')" 
+                            style="background: #3498db; color: white; border: none; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">$25</button>
+                    <button type="button" onclick="setAmount('50.00')" 
+                            style="background: #3498db; color: white; border: none; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">$50</button>
+                    <button type="button" onclick="setAmount('100.00')" 
+                            style="background: #3498db; color: white; border: none; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">$100</button>
+                    <button type="button" onclick="setAmount('250.00')" 
+                            style="background: #3498db; color: white; border: none; padding: 0.25rem 0.75rem; margin: 0.25rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">$250</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Card & Account Info -->
+    <div class="card">
+        <h3>Payment Method</h3>
+        
+        <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 1.2rem; font-weight: 500; font-family: monospace;">
+                        {{ active_card.masked_card_number }}
+                    </div>
+                    <div style="color: #666; font-size: 0.9rem; margin-top: 0.25rem;">
+                        HSA Debit Card
+                    </div>
+                </div>
+                <div class="card-status status-{{ active_card.status }}">
+                    {{ active_card.get_status_display }}
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.9rem; color: #666;">
+                <div>
+                    <div style="font-weight: 500;">Expires</div>
+                    <div>{{ active_card.expiry_date|date:"m/y" }}</div>
+                </div>
+                <div>
+                    <div style="font-weight: 500;">Available Balance</div>
+                    <div style="color: #27ae60; font-weight: 500;">${{ hsa_account.balance }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">Qualified Medical Expenses</h4>
+            <ul style="color: #666; padding-left: 1.5rem; line-height: 1.6; font-size: 0.9rem;">
+                <li>Doctor visits and medical consultations</li>
+                <li>Prescription medications</li>
+                <li>Medical equipment and supplies</li>
+                <li>Dental and vision care</li>
+                <li>Mental health services</li>
+                <li>Physical therapy and rehabilitation</li>
+            </ul>
+        </div>
+        
+        <div style="background: #d4edda; border-left: 4px solid #27ae60; padding: 1rem; border-radius: 0 4px 4px 0; margin-bottom: 1rem;">
+            <div style="font-size: 0.9rem; color: #155724;">
+                <strong>✅ Auto-Validation:</strong> Your transaction will be automatically checked against IRS Publication 502 for qualified medical expenses.
+            </div>
+        </div>
+        
+        <div style="background: #f8d7da; border-left: 4px solid #e74c3c; padding: 1rem; border-radius: 0 4px 4px 0;">
+            <div style="font-size: 0.9rem; color: #721c24;">
+                <strong>❌ Common Declined Items:</strong> Cosmetic procedures, vitamins (unless prescribed), gym memberships, and over-the-counter medications without prescription.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="card">
+    <h3>Recent Purchases</h3>
+    {% with recent_purchases=hsa_account.transactions.all|slice:":5" %}
+    {% if recent_purchases %}
+    <div style="margin-top: 1rem;">
+        {% for transaction in recent_purchases %}
+        {% if transaction.transaction_type == 'purchase' %}
+        <div class="transaction-item">
+            <div>
+                <div style="font-weight: 500;">
+                    🏪 {{ transaction.merchant|default:"Purchase" }}
+                </div>
+                <div style="font-size: 0.9rem; color: #666;">
+                    {{ transaction.transaction_date|date:"M d, Y g:i A" }}
+                    {% if transaction.expense_category %}
+                    | {{ transaction.expense_category.name }}
+                    {% endif %}
+                    {% if transaction.card %}
+                    | Card ending in {{ transaction.card.card_number|slice:"-4" }}
+                    {% endif %}
+                </div>
+                {% if transaction.decline_reason %}
+                <div style="background: #f8d7da; color: #721c24; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; margin-top: 0.5rem; border-left: 3px solid #e74c3c;">
+                    {{ transaction.decline_reason }}
+                </div>
+                {% endif %}
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: 500; font-size: 1.1rem; color: #e74c3c;">
+                    -${{ transaction.amount }}
+                </div>
+                <div class="status-{{ transaction.status }}">
+                    {{ transaction.get_status_display }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; color: #666; padding: 2rem;">
+        <div style="font-size: 2rem; margin-bottom: 1rem;">🛍️</div>
+        <p>No purchases yet. Make your first transaction above!</p>
+    </div>
+    {% endif %}
+    {% endwith %}
+</div>
+
+{% else %}
+<!-- No Active Card -->
+<div class="card">
+    <div style="text-align: center; padding: 3rem 1rem; color: #666;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;">💳</div>
+        <h3 style="color: #2c3e50; margin-bottom: 1rem;">No Active HSA Card Found</h3>
+        <p style="margin-bottom: 2rem;">
+            You need an active HSA debit card to make purchases. Request one now to start using your HSA funds.
+        </p>
+        <a href="{% url 'hsa:issue_card' %}" class="btn btn-success" style="padding: 1rem 2rem; font-size: 1.1rem;">
+            Request HSA Debit Card
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Action Buttons -->
+<div class="card">
+    <h3>Manage Your HSA</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        {% if hsa_account.balance <= 50 %}
+        <a href="{% url 'hsa:deposit_funds' %}" class="btn btn-success">
+            💰 Deposit More Funds
+        </a>
+        {% endif %}
+        <a href="{% url 'hsa:transaction_history' %}" class="btn">
+            📊 View All Transactions
+        </a>
+        <a href="{% url 'hsa:issue_card' %}" class="btn">
+            💳 Manage Cards
+        </a>
+        <a href="{% url 'hsa:dashboard' %}" class="btn">
+            🏠 Return to Dashboard
+        </a>
+    </div>
+</div>
+
+<script>
+function setAmount(amount) {
+    document.getElementById('amount').value = amount;
+}
+</script>
+
+<style>
+.card-status {
+    font-weight: 500; 
+    padding: 0.25rem 0.75rem; 
+    border-radius: 12px; 
+    font-size: 0.8rem; 
+    text-transform: uppercase;
+}
+.status-active {
+    background-color: #d4edda; 
+    color: #155724;
+}
+.status-pending {
+    background-color: #fff3cd; 
+    color: #856404;
+}
+.status-blocked {
+    background-color: #f8d7da; 
+    color: #721c24;
+}
+.status-expired {
+    background-color: #e2e3e5; 
+    color: #6c757d;
+}
+</style>
+{% endblock %}
